@@ -10,7 +10,7 @@ export class CommentStorage {
     return JSON.parse(this.state.get(this.FIELD_KEY, '[]'));
   }
 
-  async save(comments: Comment[]) {
+  async update(comments: Comment[]) {
     await this.state.update(this.FIELD_KEY, JSON.stringify(comments));
   }
 }

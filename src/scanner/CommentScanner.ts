@@ -47,7 +47,7 @@ export class CommentScanner {
         text: match[0],
         path: filePath.path,
         filename: path.basename(filePath.fsPath),
-        line: i + 1
+        line: i
       });
     }
   }

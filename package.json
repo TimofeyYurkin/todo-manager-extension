@@ -1,6 +1,9 @@
 {
-  "name": "TODO manager",
+  "name": "todo-manager",
+  "displayName": "TODO Manager",
+  "description": "Simple TODO manager for VS Code",
   "version": "0.0.1",
+  "publisher": "tturka",
   "scripts": {
     "build": "tsc -p ./"
   },
@@ -14,7 +17,15 @@
         "command": "todo-manager.scanWorkspace",
         "title": "TODO: Scan workspace"
       }
-    ]
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "workspaceComments",
+          "name": "Workspace comments"
+        }
+      ]
+    }
   },
   "activationEvents": [
     "onStartupFinished"
