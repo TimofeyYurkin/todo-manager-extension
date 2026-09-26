@@ -2,7 +2,7 @@
   "name": "TODO manager",
   "version": "0.0.1",
   "scripts": {
-    "compile": "tsc -p ./"
+    "build": "tsc -p ./"
   },
   "main": "./out/extension.js",
   "engines": {
@@ -11,8 +11,8 @@
   "contributes": {
     "commands": [
       {
-        "command": "todo-manager.testCommand",
-        "title": "TODO: test"
+        "command": "todo-manager.scanWorkspace",
+        "title": "TODO: Scan workspace"
       }
     ]
   },
