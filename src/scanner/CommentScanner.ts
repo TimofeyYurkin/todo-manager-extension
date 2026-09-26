@@ -1,4 +1,6 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
+
 import { Comment, CommentType } from '../interfaces';
 
 export class CommentScanner {
@@ -43,7 +45,8 @@ export class CommentScanner {
         type,
         priority,
         text: match[0],
-        filePath: filePath.path,
+        path: filePath.path,
+        filename: path.basename(filePath.fsPath),
         line: i + 1
       });
     }
