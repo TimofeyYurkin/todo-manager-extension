@@ -2,17 +2,16 @@ import * as vscode from 'vscode';
 import { Comment, CommentType } from '../interfaces';
 
 export class CommentScanner {
-  private COMMENT_PATTERN = new RegExp('^\\s*(?:#|//)\\s*(?<priority>!*)\\s*(?<type>TODO|FIX|BUG|NOTE)\\b.*$');
+  private readonly COMMENT_PATTERN = new RegExp('^\\s*(?:#|//)\\s*(?<priority>!*)\\s*(?<type>TODO|FIX|BUG|NOTE)\\b.*$');
   
-  async scanWorkspace(): Promise<Comment[] | null>  {
+  async scanWorkspace(): Promise<Comment[]>  {
     const paths = await vscode.workspace.findFiles('**/*', '**/{node_modules,.git,dist,build}/**');
+    const comments: Comment[] = [];
 
     if (paths.length === 0) {
       vscode.window.showErrorMessage('No files has been found in the current workspace');
-      return null;
+      return comments;
     }
-
-    const comments: Comment[] = [];
 
     for (const path of paths) {
       await this.parseFile(path, comments);

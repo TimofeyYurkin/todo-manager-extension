@@ -16,6 +16,9 @@
       }
     ]
   },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "devDependencies": {
     "@types/node": "^26.6.2",
     "@types/vscode": "^1.138.0",
