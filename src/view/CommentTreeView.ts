@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 
 import { Comment, CommentType } from '../interfaces';
 
@@ -87,6 +88,15 @@ class CommentGroup extends vscode.TreeItem {
     public readonly files: FileItem[]
   ) {
     super(label, collapsibleState);
+
+    this.iconPath = {
+      light: vscode.Uri.file(
+        path.join(__dirname, '..', 'resources', 'light', `${this.label}.svg`)
+      ),
+      dark: vscode.Uri.file(
+        path.join(__dirname, '..', 'resources', 'dark', `${this.label}.svg`)
+      ),
+    };
   }
 }
 
@@ -97,6 +107,15 @@ class FileItem extends vscode.TreeItem {
     public readonly comments: CommentItem[]
   ) {
     super(label, collapsibleState);
+
+    this.iconPath = {
+      light: vscode.Uri.file(
+        path.join(__dirname, '..', 'resources', 'light', 'file.svg')
+      ),
+      dark: vscode.Uri.file(
+        path.join(__dirname, '..', 'resources', 'dark', 'file.svg')
+      )
+    };
   }
 }
 
@@ -114,12 +133,21 @@ class FileItem extends vscode.TreeItem {
           vscode.Uri.file(comment.path),
           {
             selection: new vscode.Range(
-              new vscode.Position(comment.line - 1, 0),
-              new vscode.Position(comment.line - 1, 0)
+              new vscode.Position(comment.line, 0),
+              new vscode.Position(comment.line, 0)
             ),
             preserveFocus: false
           }
         ]
-      }
+      };
+
+      this.iconPath = {
+        light: vscode.Uri.file(
+          path.join(__dirname, '..', 'resources', `priority-${comment.priority}.svg`)
+        ),
+        dark: vscode.Uri.file(
+          path.join(__dirname, '..', 'resources', `priority-${comment.priority}.svg`)
+        )
+      };
     }
   }

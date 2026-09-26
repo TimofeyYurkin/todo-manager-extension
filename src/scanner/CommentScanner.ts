@@ -4,7 +4,7 @@ import * as path from 'path';
 import { Comment, CommentType } from '../interfaces';
 
 export class CommentScanner {
-  private readonly COMMENT_PATTERN = new RegExp('^\\s*(?:#|//)\\s*(?<priority>!*)\\s*(?<type>TODO|FIX|BUG|NOTE)\\b.*$');
+  private readonly COMMENT_PATTERN = new RegExp('^\\s*(?:#|//)\\s*(?<priority>!*)\\s*(?<type>TODO|FIX|BUG|NOTE)\\b(?<text>.*)$');
   
   async scanWorkspace(): Promise<Comment[]>  {
     const paths = await vscode.workspace.findFiles('**/*', '**/{node_modules,.git,dist,build}/**');
@@ -39,12 +39,12 @@ export class CommentScanner {
       const priority = Math.max(
         Math.min(match.groups['priority'].length, 3), 1
       );
-
+      const text = `line ${i + 1}: ${match.groups['text'].trim().replace(':', '')}`;
 
       commentsArr.push({
         type,
         priority,
-        text: match[0],
+        text,
         path: filePath.path,
         filename: path.basename(filePath.fsPath),
         line: i
