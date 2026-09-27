@@ -15,14 +15,28 @@
     "commands": [
       {
         "command": "todo-manager.scanWorkspace",
-        "title": "TODO: Scan workspace"
+        "title": "TODO: Scan Workspace",
+        "icon": {
+          "light": "./src/resources/light/sync.svg",
+          "dark": "./src/resources/dark/sync.svg"
+        }
       }
     ],
     "views": {
       "explorer": [
         {
-          "id": "workspaceComments",
-          "name": "Workspace comments"
+          "id": "todoManager",
+          "name": "TODO Manager",
+          "icon": ""
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "todo-manager.scanWorkspace",
+          "when": "view == todoManager",
+          "group": "navigation"
         }
       ]
     }

@@ -10,8 +10,8 @@ export class CommentTreeView implements vscode.TreeDataProvider<CommentTreeItem>
   private _onDidChangeTreeData: vscode.EventEmitter<EventItem> = new vscode.EventEmitter<EventItem>();
   readonly onDidChangeTreeData: vscode.Event<EventItem> = this._onDidChangeTreeData.event;
 
-  private readonly COMMENT_GROUPS: CommentGroup[] = [];
-  private readonly COMMENT_TYPES: CommentType[] = ['TODO', 'FIX', 'BUG', 'NOTE'];
+  private _commentGroups: CommentGroup[] = [];
+  private readonly _commentTypes: CommentType[] = ['TODO', 'FIX', 'BUG', 'NOTE'];
 
   constructor(comments: Comment[]) {
     this.updateCommentGroups(comments);
@@ -23,7 +23,7 @@ export class CommentTreeView implements vscode.TreeDataProvider<CommentTreeItem>
 
   getChildren(element?: CommentTreeItem | undefined): vscode.ProviderResult<CommentTreeItem[]> {
     if (!element) {
-      return this.COMMENT_GROUPS;
+      return this._commentGroups;
     }
     
     if (element instanceof CommentGroup) {
@@ -38,9 +38,9 @@ export class CommentTreeView implements vscode.TreeDataProvider<CommentTreeItem>
   }
 
   updateCommentGroups(comments: Comment[]) {
-    this.COMMENT_GROUPS.length = 0;
+    this._commentGroups.length = 0;
     
-    for (const type of this.COMMENT_TYPES) {
+    for (const type of this._commentTypes) {
       const groupComments = comments.filter(comment => comment.type === type);
       const commentsByFiles = new Map<string, CommentItem[]>();
 
@@ -68,7 +68,7 @@ export class CommentTreeView implements vscode.TreeDataProvider<CommentTreeItem>
         ))
       }
 
-      this.COMMENT_GROUPS.push(new CommentGroup(
+      this._commentGroups.push(new CommentGroup(
         type,
         vscode.TreeItemCollapsibleState.Collapsed,
         fileItems

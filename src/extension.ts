@@ -12,7 +12,7 @@ export function activate(context: vscode.ExtensionContext) {
   const view = new CommentTreeView(comments);
 
   vscode.window.registerTreeDataProvider(
-    'workspaceComments',
+    'todoManager',
     view
   );
 
