@@ -28,9 +28,33 @@
         "category": "Todo Manager"
       },
       {
+        "command": "todo-manager.removeComment",
+        "title": "Remove Comment",
+        "category": "Todo Manager"
+      },
+      {
         "command": "todo-manager.deleteComment",
         "title": "Delete Comment",
         "category": "Todo Manager"
+      }
+    ],
+
+    "keybindings": [
+      {
+        "command": "todo-manager.openComment",
+        "key": "enter",
+        "when": "view == todoManager && viewItem == comment"
+      },
+      {
+        "command": "todo-manager.removeComment",
+        "key": "ctrl+delete",
+        "mac": "cmd+delete",
+        "when": "view == todoManager && viewItem == comment"
+      },
+      {
+        "command": "todo-manager.deleteComment",
+        "key": "delete",
+        "when": "view == todoManager && viewItem == comment"
       }
     ],
 
@@ -63,17 +87,28 @@
       "view/item/context": [
         {
           "command": "todo-manager.openComment",
-          "when": "view == todoManager && viewItem == comment"
+          "when": "view == todoManager && viewItem == comment",
+          "group": "commentActions@1"
+        },
+        {
+          "command": "todo-manager.removeComment",
+          "when": "view == todoManager && viewItem == comment",
+          "group": "commentActions@2"
         },
         {
           "command": "todo-manager.deleteComment",
-          "when": "view == todoManager && viewItem == comment"
+          "when": "view == todoManager && viewItem == comment",
+          "group": "commentActions@3"
         }
       ],
 
       "commandPalette": [
         {
           "command": "todo-manager.openComment",
+          "when": "false"
+        },
+        {
+          "command": "todo-manager.removeComment",
           "when": "false"
         },
         {

@@ -32,6 +32,16 @@ export function activate(context: vscode.ExtensionContext) {
 
   const openCommentCommand = vscode.commands.registerCommand('todo-manager.openComment', openCommentInEditor);
 
+  const removeCommentCommand = vscode.commands.registerCommand(
+    'todo-manager.removeComment',
+
+    async (item: CommentItem) => {
+      await storage.deleteComment(item.comment.filename, item.comment.line);
+      view.deleteCommentItem(item.comment);
+      view.refresh();
+    } 
+  );
+
   const deleteCommentCommand = vscode.commands.registerCommand(
     'todo-manager.deleteComment',
 
@@ -46,14 +56,12 @@ export function activate(context: vscode.ExtensionContext) {
         return;
       }
       
-      await storage.deleteComment(item.comment.filename, item.comment.line);
-
-      view.deleteCommentItem(item.comment);
-      view.refresh();
+      vscode.commands.executeCommand('todo-manager.removeComment', item);
     }
   );
 
   context.subscriptions.push(scanCommand);
   context.subscriptions.push(openCommentCommand);
+  context.subscriptions.push(removeCommentCommand);
   context.subscriptions.push(deleteCommentCommand);
 }
