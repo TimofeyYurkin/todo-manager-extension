@@ -15,13 +15,25 @@
     "commands": [
       {
         "command": "todo-manager.scanWorkspace",
-        "title": "TODO: Scan Workspace",
+        "title": "Scan Workspace",
+        "category": "Todo Manager",
         "icon": {
           "light": "./src/resources/light/sync.svg",
           "dark": "./src/resources/dark/sync.svg"
         }
+      },
+      {
+        "command": "todo-manager.openComment",
+        "title": "Open Comment",
+        "category": "Todo Manager"
+      },
+      {
+        "command": "todo-manager.deleteComment",
+        "title": "Delete Comment",
+        "category": "Todo Manager"
       }
     ],
+
     "views": {
       "explorer": [
         {
@@ -31,18 +43,42 @@
         }
       ]
     },
+
     "viewsWelcome": [
       {
         "view": "todoManager",
         "contents": "No comments have been found.\n[Try to refresh](command:todo-manager.scanWorkspace)"
       }
     ],
+
     "menus": {
       "view/title": [
         {
           "command": "todo-manager.scanWorkspace",
           "when": "view == todoManager",
           "group": "navigation"
+        }
+      ],
+
+      "view/item/context": [
+        {
+          "command": "todo-manager.openComment",
+          "when": "view == todoManager && viewItem == comment"
+        },
+        {
+          "command": "todo-manager.deleteComment",
+          "when": "view == todoManager && viewItem == comment"
+        }
+      ],
+
+      "commandPalette": [
+        {
+          "command": "todo-manager.openComment",
+          "when": "false"
+        },
+        {
+          "command": "todo-manager.deleteComment",
+          "when": "false"
         }
       ]
     }

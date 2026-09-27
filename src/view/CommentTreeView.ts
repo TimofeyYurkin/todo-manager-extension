@@ -128,35 +128,28 @@ class FileItem extends vscode.TreeItem {
   }
 }
 
-  class CommentItem extends vscode.TreeItem {
-    constructor(
-      public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-      comment: Comment
-    ) {
-      super(comment.text, collapsibleState);
-      
-      this.command = {
-        command: 'vscode.open',
-        title: 'Open comment',
-        arguments: [
-          vscode.Uri.file(comment.path),
-          {
-            selection: new vscode.Range(
-              new vscode.Position(comment.line, 0),
-              new vscode.Position(comment.line, 0)
-            ),
-            preserveFocus: false
-          }
-        ]
-      };
+export class CommentItem extends vscode.TreeItem {
+  constructor(
+    public readonly collapsibleState: vscode.TreeItemCollapsibleState,
+    public readonly comment: Comment
+  ) {
+    super(comment.text, collapsibleState);
+    
+    this.contextValue = 'comment';
 
-      this.iconPath = {
-        light: vscode.Uri.file(
-          path.join(__dirname, '..', 'resources', `priority-${comment.priority}.svg`)
-        ),
-        dark: vscode.Uri.file(
-          path.join(__dirname, '..', 'resources', `priority-${comment.priority}.svg`)
-        )
-      };
-    }
+    this.command = {
+      command: 'todo-manager.openComment',
+      title: 'Open comment',
+      arguments: [this]
+    };
+
+    this.iconPath = {
+      light: vscode.Uri.file(
+        path.join(__dirname, '..', 'resources', `priority-${comment.priority}.svg`)
+      ),
+      dark: vscode.Uri.file(
+        path.join(__dirname, '..', 'resources', `priority-${comment.priority}.svg`)
+      )
+    };
   }
+}
