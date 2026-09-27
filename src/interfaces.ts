@@ -1,9 +1,13 @@
 export type CommentType = 'TODO' | 'FIX' | 'BUG' | 'NOTE';
+export type PriorityLevel = 1 | 2 | 3;
 
-export interface Comment {
+export interface CommentBase {
   type: CommentType;
-  priority: number;
+  priority: PriorityLevel;
   text: string;
+}
+
+export interface Comment extends CommentBase {
   path: string;
   filename: string;
   line: number;
