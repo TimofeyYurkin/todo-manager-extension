@@ -31,6 +31,12 @@
         }
       ]
     },
+    "viewsWelcome": [
+      {
+        "view": "todoManager",
+        "contents": "No comments have been found.\n[Try to refresh](command:todo-manager.scanWorkspace)"
+      }
+    ],
     "menus": {
       "view/title": [
         {

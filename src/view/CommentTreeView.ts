@@ -39,9 +39,18 @@ export class CommentTreeView implements vscode.TreeDataProvider<CommentTreeItem>
 
   updateCommentGroups(comments: Comment[]) {
     this._commentGroups.length = 0;
+
+    if (comments.length === 0) {
+      return;
+    }
     
     for (const type of this._commentTypes) {
       const groupComments = comments.filter(comment => comment.type === type);
+
+      if (groupComments.length === 0) {
+        continue;
+      }
+
       const commentsByFiles = new Map<string, CommentItem[]>();
 
       for (const comment of groupComments) {

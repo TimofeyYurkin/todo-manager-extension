@@ -11,7 +11,7 @@ export class CommentScanner {
     const comments: Comment[] = [];
 
     if (paths.length === 0) {
-      vscode.window.showErrorMessage('No files has been found in the current workspace');
+      vscode.window.showErrorMessage('No files have been found in the current workspace');
       return comments;
     }
 
