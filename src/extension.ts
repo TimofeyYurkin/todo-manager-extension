@@ -5,6 +5,7 @@ import { CommentScanner } from './scanner/CommentScanner';
 import { CommentTreeView, CommentItem } from './view/CommentTreeView';
 
 import { openCommentInEditor, deleteCommentFromFile } from './actions/comment';
+import { updateDecorations } from './actions/decoration';
 
 export function activate(context: vscode.ExtensionContext) {
   const storage = new CommentStorage(context.workspaceState);
@@ -12,6 +13,12 @@ export function activate(context: vscode.ExtensionContext) {
 
   const comments = storage.loadComments();
   const view = new CommentTreeView(comments);
+
+  const editor = vscode.window.activeTextEditor;
+
+  if (editor) {
+    updateDecorations(editor);
+  }
 
   vscode.window.registerTreeDataProvider(
     'todoManager',
@@ -60,8 +67,32 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
+  const changeTextDocEvent = vscode.workspace.onDidChangeTextDocument((event) => {
+    const editor = vscode.window.activeTextEditor;
+
+    if (!editor) {
+      return;
+    }
+
+    if (event.document !== editor.document) {
+      return;
+    }
+
+    updateDecorations(editor);
+  });
+
+  const changeActiveEditorEvent = vscode.window.onDidChangeActiveTextEditor((editor) => {
+    if (editor) {
+      updateDecorations(editor);
+    }
+  });
+
   context.subscriptions.push(scanCommand);
+
   context.subscriptions.push(openCommentCommand);
   context.subscriptions.push(removeCommentCommand);
   context.subscriptions.push(deleteCommentCommand);
+
+  context.subscriptions.push(changeTextDocEvent);
+  context.subscriptions.push(changeActiveEditorEvent);
 }
