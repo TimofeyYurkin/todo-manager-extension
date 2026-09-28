@@ -8,17 +8,17 @@ import { openCommentInEditor, deleteCommentFromFile } from './actions/comment';
 import { updateDecorations } from './actions/decoration';
 
 export function activate(context: vscode.ExtensionContext) {
+  const editor = vscode.window.activeTextEditor;
+  const config = vscode.workspace.getConfiguration('todoManager');
+
+  const highlightComments = !!config.get<boolean>('highlightComments');
+  const showCommentGroupIcons = !!config.get<boolean>('showCommentGroupIcons');
+
   const storage = new CommentStorage(context.workspaceState);
   const scanner = new CommentScanner();
 
   const comments = storage.loadComments();
-  const view = new CommentTreeView(comments);
-
-  const editor = vscode.window.activeTextEditor;
-
-  if (editor) {
-    updateDecorations(editor);
-  }
+  const view = new CommentTreeView(comments, showCommentGroupIcons);
 
   vscode.window.registerTreeDataProvider(
     'todoManager',
@@ -67,6 +67,19 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
+  context.subscriptions.push(scanCommand);
+  context.subscriptions.push(openCommentCommand);
+  context.subscriptions.push(removeCommentCommand);
+  context.subscriptions.push(deleteCommentCommand);
+
+  if (!highlightComments) {
+    return;
+  }
+
+  if (editor) {
+    updateDecorations(editor);
+  }
+
   const changeTextDocEvent = vscode.workspace.onDidChangeTextDocument((event) => {
     const editor = vscode.window.activeTextEditor;
 
@@ -86,12 +99,6 @@ export function activate(context: vscode.ExtensionContext) {
       updateDecorations(editor);
     }
   });
-
-  context.subscriptions.push(scanCommand);
-
-  context.subscriptions.push(openCommentCommand);
-  context.subscriptions.push(removeCommentCommand);
-  context.subscriptions.push(deleteCommentCommand);
 
   context.subscriptions.push(changeTextDocEvent);
   context.subscriptions.push(changeActiveEditorEvent);

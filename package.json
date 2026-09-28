@@ -116,7 +116,25 @@
           "when": "false"
         }
       ]
-    }
+    },
+
+    "configuration": [
+      {
+        "title": "TODO Manager",
+        "properties": {
+          "todoManager.highlightComments": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enables or disables comment highlighting in the editor"
+          },
+          "todoManager.showCommentGroupIcons": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enables or disables icons for group UI elements"
+          }
+        }
+      }
+    ]
   },
   "activationEvents": [
     "onStartupFinished"

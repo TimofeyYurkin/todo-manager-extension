@@ -19,8 +19,12 @@ export class CommentTreeView implements vscode.TreeDataProvider<CommentTreeItem>
    * Создает сущность CommentTreeView
    *
    * @param {Comment[]} comments: массив комментариев, который будет представлен в Tree View
+   * @param {boolean} showGroupIcons: отображать / не отображать иконки для UI элементов группы комментариев
    */
-  constructor(comments: Comment[]) {
+  constructor(
+    comments: Comment[], 
+    private readonly showGroupIcons: boolean
+  ) {
     this.updateCommentGroups(comments);
   }
 
@@ -104,7 +108,8 @@ export class CommentTreeView implements vscode.TreeDataProvider<CommentTreeItem>
       this.commentGroups.push(new CommentGroup(
         type,
         vscode.TreeItemCollapsibleState.Collapsed,
-        fileItems
+        fileItems,
+        this.showGroupIcons
       ));
     }
   }
@@ -163,14 +168,20 @@ class CommentGroup extends vscode.TreeItem {
    *
    * @param {string} label: название группы 
    * @param {vscode.TreeItemCollapsibleState} collapsibleState: состояние сворачиваемости 
-   * @param {FileItem[]} files: массив UI элементов файлов, являющихся детьми этой группы 
+   * @param {FileItem[]} files: массив UI элементов файлов, являющихся детьми этой группы
+   * @param {boolean} showIcon: отображать / не отображать иконку
    */
   constructor(
     public readonly label: string,
     public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-    public readonly files: FileItem[]
+    public readonly files: FileItem[],
+    showIcon: boolean
   ) {
     super(label, collapsibleState);
+
+    if (!showIcon) {
+      return;
+    }
 
     this.iconPath = {
       light: vscode.Uri.file(
