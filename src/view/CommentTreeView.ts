@@ -240,6 +240,12 @@ export class CommentItem extends vscode.TreeItem {
     
     this.contextValue = 'comment';
 
+    this.command = {
+      title: 'Open comment',
+      command: 'todo-manager.openComment',
+      arguments: [this]
+    }
+
     this.iconPath = {
       light: vscode.Uri.file(
         path.join(__dirname, '..', 'resources', `priority-${comment.priority}.svg`)

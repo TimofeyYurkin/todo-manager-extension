@@ -39,25 +39,6 @@
       }
     ],
 
-    "keybindings": [
-      {
-        "command": "todo-manager.openComment",
-        "key": "enter",
-        "when": "view == todoManager && viewItem == comment"
-      },
-      {
-        "command": "todo-manager.removeComment",
-        "key": "ctrl+delete",
-        "mac": "cmd+delete",
-        "when": "view == todoManager && viewItem == comment"
-      },
-      {
-        "command": "todo-manager.deleteComment",
-        "key": "delete",
-        "when": "view == todoManager && viewItem == comment"
-      }
-    ],
-
     "views": {
       "explorer": [
         {
