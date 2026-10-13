@@ -14,7 +14,11 @@ export class CommentScanner {
    * @returns {Promise<Comment[]>}: массив обработанных комментариев
    */
   async scanWorkspace(): Promise<Comment[]>  {
-    const paths: vscode.Uri[] = await vscode.workspace.findFiles('**/*', '**/{node_modules,.git,dist,build}/**');
+    const paths: vscode.Uri[] = await vscode.workspace.findFiles(
+      '**/*', 
+      '{**/node_modules/**,**/.git/**,**/*.{png,jpg,jpeg,gif,ico,pdf,zip,exe,dll,woff,woff2}}'
+    );
+
     const comments: Comment[] = [];
 
     if (paths.length === 0) {
@@ -37,7 +41,15 @@ export class CommentScanner {
    * @returns {Promise<void>} 
    */
   private async parseFile(fileUri: vscode.Uri, comments: Comment[]): Promise<void> {
-    const file = await vscode.workspace.openTextDocument(fileUri);
+    let file = null;
+
+    try {
+      file = await vscode.workspace.openTextDocument(fileUri);
+    }
+    catch (e) {
+      return;
+    }
+
     const separator = file.eol === vscode.EndOfLine.LF ? '\n' : '\r\n';
     const lines = file.getText().split(separator);
 
