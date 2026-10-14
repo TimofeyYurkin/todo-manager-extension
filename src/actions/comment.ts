@@ -1,20 +1,20 @@
 import * as vscode from 'vscode';
 
-import { CommentItem } from '../view/CommentTreeView';
+import { CommentNode } from '../view/CommentTreeView';
 
 /**
- * Открывает файл в редакторе и фокусирует курсор на строке с комментарием
+ * Открывает файл в редакторе и фокусирует курсор на строке с комментарием, связанного с узлом node
  *
- * @param {CommentItem} item: комментарий, который нужно открыть
+ * @param {CommentNode} node: узел комментария, который нужно открыть
  */
-export function openCommentInEditor(item: CommentItem) {
+export function openCommentInEditor(node: CommentNode): void {
   vscode.commands.executeCommand(
     'vscode.open', 
-    vscode.Uri.file(item.comment.path),
+    vscode.Uri.file(node.path),
     {
       selection: new vscode.Range(
-        new vscode.Position(item.comment.line, 0),
-        new vscode.Position(item.comment.line, 0)
+        new vscode.Position(node.line, 0),
+        new vscode.Position(node.line, 0)
       ),
       preserveFocus: false
     }
@@ -22,31 +22,31 @@ export function openCommentInEditor(item: CommentItem) {
 };
 
 /**
- * Удаляет строчку с комментарием из файла
+ * Удаляет строчку с комментарием, связанным с узлом node, из файла
  *
- * @param {CommentItem} item: комментарий, который нужно удалить
+ * @param {CommentNode} node: узел комментария, который нужно удалить
  * @throws {Error}: выбрасывает исключение, если комментарий нельзя найти по к-л причине
  */
-export async function deleteCommentFromFile(item: CommentItem) {
-  const fileUri = vscode.Uri.file(item.comment.path);
+export async function deleteCommentFromFile(node: CommentNode): Promise<void> {
+  const fileUri = vscode.Uri.file(node.path);
   let document = null;
 
   try {
     document = await vscode.workspace.openTextDocument(fileUri);
   }
   catch (e) {
-    throw new Error(`Failed to open file ${item.comment.filename}`);
+    throw new Error(`Failed to open file ${node.filename}`);
   }
 
-  if (item.comment.line >= document.lineCount) {
-    throw new Error(`Failed to find line ${item.comment.line + 1} in ${item.comment.filename}`);
+  if (node.line >= document.lineCount) {
+    throw new Error(`Failed to find line ${node.line + 1} in ${node.filename}`);
   }
 
-  const line = document.lineAt(item.comment.line);
-  const containsComment = line.text.includes(item.comment.text) && line.text.includes(item.comment.type);
+  const line = document.lineAt(node.line);
+  const containsComment = line.text.includes(node.text) && line.text.includes(node.type);
 
   if (!containsComment) {
-    throw new Error(`Failed to find comment at line ${item.comment.line + 1} in ${item.comment.filename}`);
+    throw new Error(`Failed to find comment at line ${node.line + 1} in ${node.filename}`);
   }
 
   const edit = new vscode.WorkspaceEdit();

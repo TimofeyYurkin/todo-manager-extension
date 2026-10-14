@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 
 import { CommentStorage } from './storage/CommentStorage';
 import { CommentScanner } from './scanner/CommentScanner';
-import { CommentTreeView, CommentItem } from './view/CommentTreeView';
+import { CommentTreeView, CommentNode } from './view/CommentTreeView';
 
 import { openCommentInEditor, deleteCommentFromFile } from './actions/comment';
 import { updateDecorations } from './actions/decoration';
@@ -11,8 +11,8 @@ export function activate(context: vscode.ExtensionContext) {
   const editor = vscode.window.activeTextEditor;
   const config = vscode.workspace.getConfiguration('todoManager');
 
-  const highlightComments = !!config.get<boolean>('highlightComments');
-  const showCommentGroupIcons = !!config.get<boolean>('showCommentGroupIcons');
+  const highlightComments = !!config.get<boolean>('highlightComments', true);
+  const showCommentGroupIcons = !!config.get<boolean>('showCommentGroupIcons', true);
 
   const storage = new CommentStorage(context.workspaceState);
   const scanner = new CommentScanner();
@@ -32,7 +32,7 @@ export function activate(context: vscode.ExtensionContext) {
       const comments = await scanner.scanWorkspace();
       await storage.updateComments(comments);
 
-      view.updateCommentGroups(comments);
+      view.updateTreeNodes(comments);
       view.refresh();
     }
   );
@@ -42,9 +42,10 @@ export function activate(context: vscode.ExtensionContext) {
   const removeCommentCommand = vscode.commands.registerCommand(
     'todo-manager.removeComment',
 
-    async (item: CommentItem) => {
-      await storage.deleteComment(item.comment.filename, item.comment.line);
-      view.deleteCommentItem(item.comment);
+    async (node: CommentNode): Promise<void> => {
+      await storage.deleteComment(node.filename, node.line);
+
+      view.deleteCommentNode(node);
       view.refresh();
     } 
   );
@@ -52,9 +53,9 @@ export function activate(context: vscode.ExtensionContext) {
   const deleteCommentCommand = vscode.commands.registerCommand(
     'todo-manager.deleteComment',
 
-    async (item: CommentItem) => {
+    async (node: CommentNode): Promise<void> => {
       try {
-        await deleteCommentFromFile(item);
+        await deleteCommentFromFile(node);
       }
       catch (e) {
         if (e instanceof Error) {
@@ -63,7 +64,7 @@ export function activate(context: vscode.ExtensionContext) {
         return;
       }
       
-      vscode.commands.executeCommand('todo-manager.removeComment', item);
+      vscode.commands.executeCommand('todo-manager.removeComment', node);
     }
   );
 
@@ -80,25 +81,30 @@ export function activate(context: vscode.ExtensionContext) {
     updateDecorations(editor);
   }
 
-  const changeTextDocEvent = vscode.workspace.onDidChangeTextDocument((event) => {
-    const editor = vscode.window.activeTextEditor;
+  const changeTextDocEvent = vscode.workspace.onDidChangeTextDocument(
+    (event: vscode.TextDocumentChangeEvent): void => {
+      const editor = vscode.window.activeTextEditor;
 
-    if (!editor) {
-      return;
-    }
+      if (!editor) {
+        return;
+      }
 
-    if (event.document !== editor.document) {
-      return;
-    }
+      if (event.document !== editor.document) {
+        return;
+      }
 
-    updateDecorations(editor);
-  });
-
-  const changeActiveEditorEvent = vscode.window.onDidChangeActiveTextEditor((editor) => {
-    if (editor) {
       updateDecorations(editor);
     }
-  });
+  );
+
+  const changeActiveEditorEvent = vscode.window.onDidChangeActiveTextEditor(
+    (editor: vscode.TextEditor | undefined): void => {
+      if (!editor) {
+        return;
+      }
+      updateDecorations(editor);
+    }
+  );
 
   context.subscriptions.push(changeTextDocEvent);
   context.subscriptions.push(changeActiveEditorEvent);

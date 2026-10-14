@@ -3,20 +3,20 @@ import * as path from 'path';
 
 import { CommentBase, Comment, CommentType, PriorityLevel } from '../interfaces';
 
-/* Класс для сканировария рабочего пространства на наличие комментариев и их последующего парсинга */
+/* Класс, реализующий логику анализа текстовых файлов рабочего пространства на наличие комментариев и парсинг найденных комментариев */
 export class CommentScanner {
   private readonly commentPattern = new RegExp('^\\s*(?:#|//)\\s*(?<priority>!*)\\s*(?<type>TODO|FIX|BUG|NOTE)\\b(?<text>.*)$');
   
   /**
-   * Ищет комментарии во всех файлах текущего рабочего пространства,
-   * возвращает массив найденных комментариев в обработанном виде
+   * Ищет текстовые файлы текущего рабочего пространства и парсит их на наличие комментариев с помощью приватного метода,
+   * возвращает массив найденных комментариев, обработанных парсером
    *
    * @returns {Promise<Comment[]>}: массив обработанных комментариев
    */
   async scanWorkspace(): Promise<Comment[]>  {
     const paths: vscode.Uri[] = await vscode.workspace.findFiles(
       '**/*', 
-      '{**/node_modules/**,**/.git/**,**/*.{png,jpg,jpeg,gif,ico,pdf,zip,exe,dll,woff,woff2}}'
+      '{**/node_modules/**,**/.idea/**,**/build/**,**/.git/**,**/*.{png,jpg,jpeg,gif,ico,pdf,zip,exe,dll,woff,woff2}}'
     );
 
     const comments: Comment[] = [];
@@ -30,11 +30,15 @@ export class CommentScanner {
       await this.parseFile(path, comments);
     }
 
+    if (comments.length === 0) {
+      vscode.window.showWarningMessage('Failed to find any specific comments in the current workspace');
+    }
+  
     return comments;
   }
 
   /**
-   * Ищет комментарии в файле, парсит их и сохраняет в результирующий массив
+   * Парсит комментарии, найденные в файле с идентификатором fileUri, и сохраняет их в результирующий массив comments
    *
    * @param {vscode.Uri} fileUri: уникальный идентификатор обрабатываемого файла 
    * @param {Comment[]} comments: результирющуй массив, в который записываются обработанные комментарии 
@@ -56,32 +60,33 @@ export class CommentScanner {
     for (let i = 0; i < file.lineCount; i++) {
       const match = lines[i].match(this.commentPattern);
 
-      try {
-        const commentBase: CommentBase = this.parseCommentMatch(match);
-        comments.push({
-          ...commentBase,
-          path: fileUri.path,
-          filename: path.basename(fileUri.fsPath),
-          line: i
-        });
-      }
-      catch (e) {
+      const parsingResult: CommentBase | null = this.parseCommentMatch(match);
+
+      if (!parsingResult) {
         continue;
       }
+
+      comments.push({
+        ...parsingResult,
+        path: fileUri.path,
+        filename: path.basename(fileUri.fsPath),
+        line: i
+      });
+
     }
   }
 
   /**
-   * Обрабатывает результат работы регулярного выражения для поиска комментариев,
-   * выбрасывает ошибку, если результат регулярного выражения пустой,
-   * возвращает базовую информацию о комментарии в противном случае
+   * Обрабатывает результат работы регулярного выражения для поиска комментария в строке файла,
+   * если результат ненулевой, возвращает объект с базовой информацией о комментарии,
+   * в противном случае возвращает null
    *
-   * @param {(RegExpMatchArray | null)} match: результат рабоыт регулярного выражения
-   * @returns {CommentBase}: базовая информация о комментарии (тип, уровень приоритета, текст)
+   * @param {(RegExpMatchArray | null)} match: результат работы регулярного выражения
+   * @returns {CommentBase | null}: базовая информация о комментарии (тип комментария, уровень приоритета, текст комментария) | null
    */
-  private parseCommentMatch(match: RegExpMatchArray | null): CommentBase {
+  private parseCommentMatch(match: RegExpMatchArray | null): CommentBase | null {
     if (!match || !match.groups) {
-      throw new Error('Invalid match');
+      return null;
     }
 
     const type: CommentType = match.groups['type'] as CommentType;

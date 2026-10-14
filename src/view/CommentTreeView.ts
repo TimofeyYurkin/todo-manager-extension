@@ -1,258 +1,246 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 
-import { Comment, CommentType } from '../interfaces';
+import { Comment, CommentType, PriorityLevel } from '../interfaces';
 
-type CommentTreeItem = CommentGroup | FileItem | CommentItem;
-type EventItem = CommentTreeItem | undefined | null | void;
+interface GroupNode {
+  kind: 'group';
+  label: string;
+  children: FileNode[];
+};
+
+interface FileNode {
+  kind: 'file';
+  label: string;
+  children: CommentNode[];
+};
+
+export interface CommentNode extends Comment {
+  kind: 'comment';
+  label: string;
+};
+
+type TreeNode = GroupNode | FileNode | CommentNode;
+type EventItem = TreeNode | undefined | null | void;
 
 
-/* Класс, описывающий VS Code Tree View для визуализации информации о найденных комментариях */
-export class CommentTreeView implements vscode.TreeDataProvider<CommentTreeItem> {
+/* Класс, описывающий UI-элемент VS Code Tree View, используемый для визуализации информации о найденных в файлах проекта комментариев */
+export class CommentTreeView implements vscode.TreeDataProvider<TreeNode> {
+  private static readonly _commentTypes: CommentType[] = ['TODO', 'FIX', 'BUG', 'NOTE'];
+
   private _onDidChangeTreeData: vscode.EventEmitter<EventItem> = new vscode.EventEmitter<EventItem>();
+  private _rootNodes: GroupNode[] = [];
+
   readonly onDidChangeTreeData: vscode.Event<EventItem> = this._onDidChangeTreeData.event;
 
-  private commentGroups: CommentGroup[] = [];
-  private readonly commentTypes: CommentType[] = ['TODO', 'FIX', 'BUG', 'NOTE'];
-
   /**
-   * Создает сущность CommentTreeView
+   * Создает сущность CommentTreeView с массивом _rootNodes.
+   * _rootNodes - корневые узлы дерева TreeView, представляющие группы комментариев типов _commentTypes.
    *
-   * @param {Comment[]} comments: массив комментариев, который будет представлен в Tree View
-   * @param {boolean} showGroupIcons: отображать / не отображать иконки для UI элементов группы комментариев
+   * @param {Comment[]} comments: массив комментариев, который будет представлен в конечном UI-элементе
+   * @param {boolean} showIcons: флаг, отвечающий за отображение иконок для узлов TreeView
    */
   constructor(
     comments: Comment[], 
-    private readonly showGroupIcons: boolean
+    private readonly showIcons: boolean
   ) {
-    this.updateCommentGroups(comments);
+    this.updateTreeNodes(comments);
   }
 
   /**
-   * Метод, используемый VS Code для получения информации о конкретном элементе Tree View
+   * Метод, используемый VS Code для получения UI-представления узла node Tree View.
+   * Создает и возвращает объект класса TreeItem, представляющий UI-элемент, описывающий узел node
    * 
-   * @param {CommentTreeItem} element: элемент Tree View
-   * @returns {vscode.TreeItem}: элемент Tree View
+   * @param {TreeNode} node: узел Tree View, UI-представление которого нужно получить
+   * @returns {vscode.TreeItem}: объект класса TreeItem, представляющий UI-элемент, описывающий узел node
    */
-  getTreeItem(element: CommentTreeItem): vscode.TreeItem {
-    return element;
+  getTreeItem(node: TreeNode): CommentTreeItem {
+    const item = new CommentTreeItem(
+      node,
+      this.showIcons
+    );
+
+    return item;
   }
 
   /**
-   * Метод, используемый VS Code для получения всех детей конкретного элемента Tree View
+   * Метод, используемый VS Code при отрисовке Tree View для получения дочерних узлов узла дерева / корневых узлов.
+   * Возвращает дочерние узлы требуемого узла или корневые узлы
    *
-   * @param {?(CommentTreeItem | undefined)} [element]: элемент, детей которого нужно получить (если undefined - нужны дети корневого элемента)
-   * @returns {vscode.ProviderResult<CommentTreeItem[]>}: массив элементов Tree View
+   * @param {?(TreeNode | undefined)} node: узел, детей которого необходимо получить (если undefined - необходимы корневые узлы)
+   * @returns {vscode.ProviderResult<TreeNode[]>}: массив дочерних узлов узла / корневые узлы
    */
-  getChildren(element?: CommentTreeItem | undefined): vscode.ProviderResult<CommentTreeItem[]> {
-    if (!element) {
-      return this.commentGroups;
+  getChildren(node?: TreeNode): vscode.ProviderResult<TreeNode[]> {
+    if (!node) {
+      return this._rootNodes;
     }
     
-    if (element instanceof CommentGroup) {
-      return element.files;
-    }
-
-    if (element instanceof FileItem) {
-      return element.comments;
+    if (node.kind !== 'comment') {
+      return node.children;
     }
 
     return [];
   }
 
   /**
-   * Полностью перезаписывает структуру Tree View переданным массивом комментариев
+   * Полностью перезаписывает структуру узлов Tree View, используя данные о комментариях из переданного массива comments
    *
    * @param {Comment[]} comments: массив комментариев, который должен использоваться при перезаписи
+   * @returns {void}
    */
-  updateCommentGroups(comments: Comment[]) {
-    this.commentGroups.length = 0;
+  updateTreeNodes(comments: Comment[]): void {
+    this._rootNodes.length = 0;
 
     if (comments.length === 0) {
       return;
     }
     
-    for (const type of this.commentTypes) {
-      const groupComments = comments.filter(comment => comment.type === type);
+    for (const type of CommentTreeView._commentTypes) {
+      const commentsOfGroup = comments.filter(comment => comment.type === type);
 
-      if (groupComments.length === 0) {
+      if (commentsOfGroup.length === 0) {
         continue;
       }
 
-      const commentsByFiles = new Map<string, CommentItem[]>();
+      const groupNode: GroupNode = {
+        kind: 'group',
+        label: type,
+        children: []
+      };
 
-      for (const comment of groupComments) {
-        const item = new CommentItem(
-          vscode.TreeItemCollapsibleState.None,
-          comment
-        );
+      const commentsByFiles = new Map<string, CommentNode[]>();
+
+      for (const comment of commentsOfGroup) {
+        const commentNode: CommentNode = {
+          kind: 'comment',
+          label: `line ${comment.line + 1}: ${comment.text}`,
+          ...comment
+        };
         
         if (!commentsByFiles.has(comment.filename)) {
-          commentsByFiles.set(comment.filename, [item,]);
+          commentsByFiles.set(comment.filename, [commentNode,]);
         }
         else {
-          commentsByFiles.get(comment.filename)?.push(item);
+          commentsByFiles.get(comment.filename)!.push(commentNode);
         }
       }
 
-      const fileItems = [];
+      for (const [filename, nodes] of commentsByFiles.entries()) {
+        const fileNode: FileNode = {
+          kind: 'file',
+          label: filename,
+          children: nodes
+        };
 
-      for (const [filename, items] of commentsByFiles.entries()) {
-        fileItems.push(new FileItem(
-          filename,
-          vscode.TreeItemCollapsibleState.Collapsed,
-          items
-        ))
+        groupNode.children.push(fileNode);
       }
 
-      this.commentGroups.push(new CommentGroup(
-        type,
-        vscode.TreeItemCollapsibleState.Collapsed,
-        fileItems,
-        this.showGroupIcons
-      ));
+      this._rootNodes.push(groupNode);
     }
   }
 
   /**
-   * Удаляет UI элемент комментария из Tree View.
-   * При необходимости также удаляет элементы файла и группы
+   * Удаляет узел комментария node из дерева узлов Tree View. 
+   * Если этот узел был последним дочерним элементом узла файла, также удалит узел файла.
+   * Если узел файла был последним дочерним элементом узла группы, также удалит узел группы.
    * 
-   * @param {Comment} comment: комментарий, который необходимо удалить
+   * @param {Comment} node: узел, который необходимо удалить
+   * @returns {void}
    */
-  deleteCommentItem(comment: Comment) {
-    const groupIndex = this.commentGroups.findIndex(g => g.label === comment.type);
+  deleteCommentNode(node: CommentNode): void {
+    const groupNodeIndex = this._rootNodes.findIndex(g => g.label === node.type);
 
-    if (groupIndex === -1) {
+    if (groupNodeIndex === -1) {
       return;
     }
 
-    const groupItem = this.commentGroups[groupIndex];
-    const fileIndex = groupItem.files.findIndex(f => f.label === comment.filename);
+    const groupNode = this._rootNodes[groupNodeIndex];
+    const fileNodeIndex = groupNode.children.findIndex(f => f.label === node.filename);
 
-    if (fileIndex === -1) {
+    if (fileNodeIndex === -1) {
       return;
     }
 
-    const fileItem = groupItem.files[fileIndex];
+    const fileNode = groupNode.children[fileNodeIndex];
 
-    for (let i = 0; i < fileItem.comments.length; i++) {
-      const commentItem = fileItem.comments[i];
+    for (let i = 0; i < fileNode.children.length; i++) {
+      const commentNode = fileNode.children[i];
 
-      if (comment.line === commentItem.comment.line) {
-        fileItem.comments.splice(i, 1);
+      if (node.line === commentNode.line) {
+        fileNode.children.splice(i, 1);
         break;
       }
     }
 
-    if (fileItem.comments.length === 0) {
-      groupItem.files.splice(fileIndex, 1);
+    if (fileNode.children.length === 0) {
+      groupNode.children.splice(fileNodeIndex, 1);
     }
 
-    if (groupItem.files.length === 0) {
-      this.commentGroups.splice(groupIndex, 1);
+    if (groupNode.children.length === 0) {
+      this._rootNodes.splice(groupNodeIndex, 1);
     }
   }
 
-  /* Тригеррит событие для изменения Tree View */
-  refresh() {
+  /** 
+   * Тригеррит событие для изменения Tree View 
+   * 
+   * @returns {void}
+  */
+  refresh(): void {
     this._onDidChangeTreeData.fire();
   }
 }
 
-
-/* Класс, описывающий UI элемента Tree view, представлящего группу комментариев */
-class CommentGroup extends vscode.TreeItem {
-  /**
-   * Создает сущность CommentGroup
-   *
-   * @param {string} label: название группы 
-   * @param {vscode.TreeItemCollapsibleState} collapsibleState: состояние сворачиваемости 
-   * @param {FileItem[]} files: массив UI элементов файлов, являющихся детьми этой группы
-   * @param {boolean} showIcon: отображать / не отображать иконку
-   */
+class CommentTreeItem extends vscode.TreeItem { 
   constructor(
-    public readonly label: string,
-    public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-    public readonly files: FileItem[],
-    showIcon: boolean
+    public readonly node: TreeNode,
+    setIcon: boolean
   ) {
-    super(label, collapsibleState);
+    super(node.label, vscode.TreeItemCollapsibleState.None);
 
-    if (!showIcon) {
-      return;
+    this.contextValue = node.kind;
+
+    if (node.kind === 'comment') {
+      this.command = {
+        title: 'Open comment',
+        command: 'todo-manager.openComment',
+        arguments: [this.node]
+      };
+    }
+    else {
+      this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
     }
 
-    this.iconPath = {
-      light: vscode.Uri.file(
-        path.join(__dirname, '..', 'resources', 'light', `${this.label}.svg`)
-      ),
-      dark: vscode.Uri.file(
-        path.join(__dirname, '..', 'resources', 'dark', `${this.label}.svg`)
-      ),
-    };
+    if (setIcon) {
+      this.setItemIcon();
+    }
   }
-}
 
-
-/* Класс, описывающий UI элемента Tree View, представляющего файл, в к-ом находятся комментарии */
-class FileItem extends vscode.TreeItem {
   /**
-   * Создает сущность FileItem
-   *
-   * @param {string} label: название файла
-   * @param {vscode.TreeItemCollapsibleState} collapsibleState: состояние сворачиваемости
-   * @param {CommentItem[]} comments: массив элементов комментариев, принадлежащих этому файлу
-   */
-  constructor(
-    public readonly label: string,
-    public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-    public readonly comments: CommentItem[]
-  ) {
-    super(label, collapsibleState);
-
-    this.iconPath = {
-      light: vscode.Uri.file(
-        path.join(__dirname, '..', 'resources', 'light', 'file.svg')
-      ),
-      dark: vscode.Uri.file(
-        path.join(__dirname, '..', 'resources', 'dark', 'file.svg')
-      )
-    };
-  }
-}
-
-/* Класс, описывающий UI элемента Tree View, представляющего комментарий */
-export class CommentItem extends vscode.TreeItem {
-  /**
-   * Создает сущность CommentItem
+   * Устанавливает иконку для сущности CommentTreeItem
    * 
-   * @param {vscode.TreeItemCollapsibleState} collapsibleState: состояние сворачиваемости
-   * @param {Comment} comment: комментарий, связанный с данным UI элементом
+   * @returns {void}
    */
-  constructor(
-    public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-    public readonly comment: Comment
-  ) {
-    const label = `line ${comment.line + 1}: ${comment.text}`;
+  private setItemIcon(): void {
+    let iconFilename = null;
 
-    super(label, collapsibleState);
-    
-    this.contextValue = 'comment';
-
-    this.command = {
-      title: 'Open comment',
-      command: 'todo-manager.openComment',
-      arguments: [this]
+    if (this.node.kind === 'comment') {
+      iconFilename = `priority-${this.node.priority}.svg`;
+    }
+    else if (this.node.kind === 'file') {
+      iconFilename = `file.svg`;
+    }
+    else {
+      iconFilename = `${this.node.label}.svg`;
     }
 
     this.iconPath = {
       light: vscode.Uri.file(
-        path.join(__dirname, '..', 'resources', `priority-${comment.priority}.svg`)
+        path.join(__dirname, '..', 'resources', this.node.kind !== 'comment' ? 'light' : '', iconFilename)
       ),
       dark: vscode.Uri.file(
-        path.join(__dirname, '..', 'resources', `priority-${comment.priority}.svg`)
-      )
+        path.join(__dirname, '..', 'resources', this.node.kind !== 'comment' ? 'dark' : '', iconFilename)
+      ),
     };
   }
 }

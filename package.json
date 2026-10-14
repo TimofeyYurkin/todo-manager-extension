@@ -106,12 +106,12 @@
           "todoManager.highlightComments": {
             "type": "boolean",
             "default": true,
-            "description": "Enables or disables comment highlighting in the editor"
+            "description": "Activate comment highlighting in the editor"
           },
           "todoManager.showCommentGroupIcons": {
             "type": "boolean",
             "default": true,
-            "description": "Enables or disables icons for group UI elements"
+            "description": "Add icons for group UI elements"
           }
         }
       }
