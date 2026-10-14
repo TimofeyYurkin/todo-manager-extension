@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 
-import { Comment, CommentType, PriorityLevel } from '../interfaces';
+import { Comment, CommentType } from '../interfaces';
 
 interface GroupNode {
   kind: 'group';
@@ -38,11 +38,11 @@ export class CommentTreeView implements vscode.TreeDataProvider<TreeNode> {
    * _rootNodes - корневые узлы дерева TreeView, представляющие группы комментариев типов _commentTypes.
    *
    * @param {Comment[]} comments: массив комментариев, который будет представлен в конечном UI-элементе
-   * @param {boolean} showIcons: флаг, отвечающий за отображение иконок для узлов TreeView
+   * @param {boolean} showGroupIcons: флаг, отвечающий за отображение иконок для корневых узлов TreeView
    */
   constructor(
     comments: Comment[], 
-    private readonly showIcons: boolean
+    private readonly showGroupIcons: boolean
   ) {
     this.updateTreeNodes(comments);
   }
@@ -57,7 +57,7 @@ export class CommentTreeView implements vscode.TreeDataProvider<TreeNode> {
   getTreeItem(node: TreeNode): CommentTreeItem {
     const item = new CommentTreeItem(
       node,
-      this.showIcons
+      this.showGroupIcons || node.kind !== 'group'
     );
 
     return item;

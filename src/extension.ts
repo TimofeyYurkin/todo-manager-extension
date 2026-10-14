@@ -8,27 +8,20 @@ import { openCommentInEditor, deleteCommentFromFile } from './actions/comment';
 import { updateDecorations } from './actions/decoration';
 
 export function activate(context: vscode.ExtensionContext) {
-  const editor = vscode.window.activeTextEditor;
   const config = vscode.workspace.getConfiguration('todoManager');
 
-  const highlightComments = !!config.get<boolean>('highlightComments', true);
-  const showCommentGroupIcons = !!config.get<boolean>('showCommentGroupIcons', true);
-
-  const storage = new CommentStorage(context.workspaceState);
   const scanner = new CommentScanner();
-
+  const storage = new CommentStorage(context.workspaceState);
   const comments = storage.loadComments();
-  const view = new CommentTreeView(comments, showCommentGroupIcons);
 
-  vscode.window.registerTreeDataProvider(
-    'todoManager',
-    view
-  );
+  const view = new CommentTreeView(comments, config.get<boolean>('showCommentGroupIcons', true));
 
-  const scanCommand = vscode.commands.registerCommand(
+  vscode.window.registerTreeDataProvider('todoManager', view);
+
+  const scanWorkspaceCommand = vscode.commands.registerCommand(
     'todo-manager.scanWorkspace', 
 
-    async () => {
+    async (): Promise<void> => {
       const comments = await scanner.scanWorkspace();
       await storage.updateComments(comments);
 
@@ -68,44 +61,16 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
-  context.subscriptions.push(scanCommand);
+  context.subscriptions.push(scanWorkspaceCommand);
   context.subscriptions.push(openCommentCommand);
   context.subscriptions.push(removeCommentCommand);
   context.subscriptions.push(deleteCommentCommand);
 
-  if (!highlightComments) {
-    return;
+  if (config.get<boolean>('highlightComments', true)) {
+    const changeTextDocEvent = vscode.workspace.onDidChangeTextDocument(updateDecorations);
+    const changeActiveEditorEvent = vscode.window.onDidChangeActiveTextEditor(updateDecorations);
+    
+    context.subscriptions.push(changeTextDocEvent);
+    context.subscriptions.push(changeActiveEditorEvent);
   }
-
-  if (editor) {
-    updateDecorations(editor);
-  }
-
-  const changeTextDocEvent = vscode.workspace.onDidChangeTextDocument(
-    (event: vscode.TextDocumentChangeEvent): void => {
-      const editor = vscode.window.activeTextEditor;
-
-      if (!editor) {
-        return;
-      }
-
-      if (event.document !== editor.document) {
-        return;
-      }
-
-      updateDecorations(editor);
-    }
-  );
-
-  const changeActiveEditorEvent = vscode.window.onDidChangeActiveTextEditor(
-    (editor: vscode.TextEditor | undefined): void => {
-      if (!editor) {
-        return;
-      }
-      updateDecorations(editor);
-    }
-  );
-
-  context.subscriptions.push(changeTextDocEvent);
-  context.subscriptions.push(changeActiveEditorEvent);
 }

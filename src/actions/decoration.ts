@@ -8,7 +8,7 @@ const basicDecoration: vscode.DecorationRenderOptions = {
   'fontStyle': 'italic'
 };
 
-const commentDecorationTypes: Record<CommentType, vscode.TextEditorDecorationType> = {
+const commentDecorations: Record<CommentType, vscode.TextEditorDecorationType> = {
   'TODO': vscode.window.createTextEditorDecorationType({
     ...basicDecoration,
     color: 'rgba(169, 217, 106, 1)'
@@ -33,14 +33,19 @@ const commentDecorationTypes: Record<CommentType, vscode.TextEditorDecorationTyp
 /**
  * Применяет декорирование к комментариям в текущем активном редакторе
  *
- * @param {vscode.TextEditor} editor: объект текущего активного редактора
+ * 
  */
-export function updateDecorations(editor: vscode.TextEditor) {
-  const decorations: Record<CommentType, vscode.DecorationOptions[]> = {
-    'TODO': [],
-    'FIX': [],
-    'BUG': [],
-    'NOTE': []
+export function updateDecorations(): void {
+  const editor = vscode.window.activeTextEditor;
+
+  if (!editor) {
+    return;
+  }
+
+  const linesToDecorate = {} as Record<CommentType, vscode.DecorationOptions[]>;
+
+  for (const type of commentTypes) {
+    linesToDecorate[type] = [];
   }
 
   for (let i = 0; i < editor.document.lineCount; i++) {
@@ -50,11 +55,11 @@ export function updateDecorations(editor: vscode.TextEditor) {
       if (!line.text.includes(`${type}:`)) {
         continue;
       }
-      decorations[type].push({ range: line.range });
+      linesToDecorate[type].push({ range: line.range });
     }
   }
 
   for (const type of commentTypes) {
-    editor.setDecorations(commentDecorationTypes[type], decorations[type]);
+    editor.setDecorations(commentDecorations[type], linesToDecorate[type]);
   }
 }
