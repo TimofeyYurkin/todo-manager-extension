@@ -56,7 +56,7 @@ export async function deleteCommentFromFile(node: CommentNode): Promise<void> {
 
   const line = document.lineAt(node.line)
 
-  if (line.text.includes(node.text) && line.text.includes(node.type)) {
+  if (!(line.text.includes(node.text) && line.text.includes(node.type))) {
     throw new Error(`Failed to find comment at line ${node.line + 1} in ${node.filename}`)
   }
 
