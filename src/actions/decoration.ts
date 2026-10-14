@@ -1,3 +1,10 @@
+/** 
+ * ## `/actions/decoration.ts`
+ * 
+ * Модуль, предоставляющий функцию для декорирования комментариев в активном окне редактора IDE,
+ * 
+ * @module
+ */
 import * as vscode from 'vscode';
 
 import { CommentType } from '../interfaces';
@@ -31,9 +38,8 @@ const commentDecorations: Record<CommentType, vscode.TextEditorDecorationType> =
 }
 
 /**
- * Применяет декорирование к комментариям в текущем активном редакторе
- *
- * 
+ * Применяет декорирование к комментариям, обратываемым плагином, в текущем текстовом файле,
+ * открытом в области редактора IDE
  */
 export function updateDecorations(): void {
   const editor = vscode.window.activeTextEditor;

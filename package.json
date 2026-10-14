@@ -38,7 +38,6 @@
         "category": "Todo Manager"
       }
     ],
-
     "views": {
       "explorer": [
         {
@@ -48,14 +47,12 @@
         }
       ]
     },
-
     "viewsWelcome": [
       {
         "view": "todoManager",
         "contents": "No comments have been found.\n[Try to refresh](command:todo-manager.scanWorkspace)"
       }
     ],
-
     "menus": {
       "view/title": [
         {
@@ -64,7 +61,6 @@
           "group": "navigation"
         }
       ],
-
       "view/item/context": [
         {
           "command": "todo-manager.openComment",
@@ -82,7 +78,6 @@
           "group": "commentActions@3"
         }
       ],
-
       "commandPalette": [
         {
           "command": "todo-manager.openComment",
@@ -98,7 +93,6 @@
         }
       ]
     },
-
     "configuration": [
       {
         "title": "TODO Manager",
@@ -111,7 +105,7 @@
           "todoManager.showCommentGroupIcons": {
             "type": "boolean",
             "default": true,
-            "description": "Add icons for group UI elements"
+            "description": "Add icons for root nodes of TODO Manager Tree View"
           }
         }
       }
@@ -123,7 +117,9 @@
   "devDependencies": {
     "@types/node": "^26.6.2",
     "@types/vscode": "^1.138.0",
-    "copyfiles": "^2.4.1",
+    "copyfiles": "^2.4.1"
+  },
+  "dependencies": {
     "typescript": "^7.0.2"
   }
 }
