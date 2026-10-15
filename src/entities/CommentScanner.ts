@@ -18,7 +18,7 @@ import { CommentBase, Comment, CommentType, PriorityLevel } from '../interfaces'
 */
 export class CommentScanner {
   /* Регулярное выражение для поиска комментариев, обрабатываемых плагином */
-  private readonly commentPattern = new RegExp('^\\s*(?:#|//)\\s*(?<priority>!*)\\s*(?<type>TODO|FIX|BUG|NOTE)\\b(?<text>.*)$');
+  private readonly commentPattern = new RegExp('^\\s*(?:#|//|\'\'\')\\s*(?<priority>!*)\\s*(?<type>TODO|FIX|BUG|NOTE)\\b(?<text>.*)$');
 
   /**
    * Анализирует текстовые файлы активного рабочего пространства на наличие комментариев.
